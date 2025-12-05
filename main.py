@@ -1,9 +1,20 @@
 from fastapi import FastAPI, Query
 from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from downloader import fetch_tiktok_video, normalize_url
 
 app = FastAPI(title="TikTok Downloader API", version="1.0.0")
 
+# --- Bagian Baru: Izin Akses (CORS) ---
+# Ini supaya Frontend HTML kamu diizinkan mengambil data dari Backend ini
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Mengizinkan semua website mengakses API ini
+    allow_credentials=True,
+    allow_methods=["*"],  # Mengizinkan semua metode (GET, POST, dll)
+    allow_headers=["*"],  # Mengizinkan semua header
+)
+# --------------------------------------
 
 @app.get("/")
 def home():
