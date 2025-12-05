@@ -15,16 +15,13 @@ def normalize_url(url: str) -> str:
 
 async def fetch_tiktok_video(url: str) -> dict:
     """
-    Fungsi backend simpel.
-    NOTE: TikTok TIDAK menyediakan API publik, jadi downloader memakai scraping endpoint.
-    Di sini kita gunakan endpoint pihak ketiga (tanpa API key) hanya untuk demo.
-    Kamu bebas ganti ke service lain nanti.
+    Versi UPGRADE: Memprioritaskan kualitas HD (1080p/720p High Bitrate)
     """
 
-    api = "https://www.tikwm.com/api/"  # API publik non-official TikTok
+    api = "https://www.tikwm.com/api/" 
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        async with httpx.AsyncClient(timeout=20) as client: # Timeout dinaikkan dikit biar aman
             r = await client.post(api, data={"url": url})
             data = r.json()
 
@@ -33,14 +30,22 @@ async def fetch_tiktok_video(url: str) -> dict:
 
         result = data["data"]
 
+        # LOGIC PENTING: Prioritas HD
+        # Kita cek apakah 'hdplay' ada isinya? Jika ada, pakai itu.
+        # Jika tidak ada, pakai 'play' biasa.
+        final_video_url = result.get("hdplay")
+        if not final_video_url:
+            final_video_url = result.get("play", "")
+
         return {
             "title": result.get("title", ""),
             "author": result.get("author", {}).get("unique_id", "unknown"),
             "duration": result.get("duration", 0),
-            "video_no_wm": result.get("play", ""),
+            "video_no_wm": final_video_url, # <--- Ini sekarang otomatis HD
             "video_wm": result.get("wmplay", ""),
             "music": result.get("music", ""),
             "cover": result.get("cover", ""),
+            "is_hd": True if result.get("hdplay") else False # Info tambahan (opsional)
         }
 
     except Exception as e:
